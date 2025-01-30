@@ -23,7 +23,7 @@ func _get_preset_count() -> int:
 	return 0
 func _import(source_file: String, save_path: String, options: Dictionary, platform_variants: Array[String], gen_files: Array[String]) -> Error:
 	var filePath = ProjectSettings.globalize_path(source_file)
-	var zip: ZIPReader
+	var zip = ZIPReader.new()
 	zip.open(filePath)
 	var rawImages: Array[Image]
 	var layerNames: Array[String]
@@ -32,22 +32,28 @@ func _import(source_file: String, save_path: String, options: Dictionary, platfo
 	var height = 0;
 	for entry in zip.get_files():
 		if entry == "stack.xml":
-			var xml: XMLParser
+			var xml = XMLParser.new()
 			var bArray = zip.read_file(entry)
 			xml.open_buffer(bArray)
-			xml.read() #<?xml
-			xml.read() #<image
+			while xml.get_node_type() != XMLParser.NODE_ELEMENT:
+				xml.read()
 			width = int(xml.get_attribute_value(0))
 			height = int(xml.get_attribute_value(1))
-			xml.read() #<stack
-			while xml.get_node_type() != XMLParser.NODE_ELEMENT_END:
-				var name = xml.get_attribute_value(2)
-				var x = int(xml.get_attribute_value(4))
-				var y = int(xml.get_attribute_value(5))
-				offsets[Vector2i(x,y)] = name
+			xml.read()
+			while xml.get_node_type() != XMLParser.NODE_ELEMENT:
+				xml.read()
+			xml.read()
+			while true:
+				if xml.get_node_type() == XMLParser.NODE_ELEMENT:
+					var name = xml.get_attribute_value(2)
+					var x = int(xml.get_attribute_value(4))
+					var y = int(xml.get_attribute_value(5))
+					offsets[name] = Vector2i(x,y)
+				if xml.read() == ERR_FILE_EOF:
+					break
 		if entry.begins_with("data/"):
 			var bArray = zip.read_file(entry)
-			var image: Image
+			var image = Image.new()
 			image.load_png_from_buffer(bArray)
 			rawImages.push_back(image)
 			layerNames.push_back(entry)
@@ -61,11 +67,9 @@ func _import(source_file: String, save_path: String, options: Dictionary, platfo
 		var image = rawImages[i]
 		newImage.blit_rect(image, Rect2i(0, 0, image.get_width(), image.get_height()), offsets[layerNames[i]])
 		finalImages.push_back(newImage)
-	var texture: Texture2DArray
+	var texture = Texture2DArray.new()
 	texture.create_from_images(finalImages)
 	return ResourceSaver.save(texture, save_path + "." + _get_save_extension())
-	
-	
 	
 	
 	
