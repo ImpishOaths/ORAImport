@@ -5,6 +5,8 @@ extends EditorImportPlugin
 
 func _get_importer_name() -> String:
 	return "ImpishOaths.ORAImport"
+func _get_import_order() -> int:
+	return ResourceImporter.ImportOrder.IMPORT_ORDER_DEFAULT
 func _get_visible_name() -> String:
 	return "ORA Import"
 func _get_recognized_extensions() -> PackedStringArray:
