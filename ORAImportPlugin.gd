@@ -24,7 +24,10 @@ func _get_preset_count() -> int:
 func _import(source_file: String, save_path: String, options: Dictionary, platform_variants: Array[String], gen_files: Array[String]) -> Error:
 	var filePath = ProjectSettings.globalize_path(source_file)
 	var zip = ZIPReader.new()
-	zip.open(filePath)
+	var err = zip.open(filePath)
+	if(err):
+		printerr(filePath + " file is likely not actually an .ora file. Make sure it\'s a zip!")
+		return ERR_FILE_UNRECOGNIZED;
 	var rawImages: Array[Image]
 	var layerNames: Array[String]
 	var offsets: Dictionary
